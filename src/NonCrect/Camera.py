@@ -16,6 +16,7 @@ class Camera(Object):
 
     def __init__(self, master: pg.Surface, pos):
         self.__master = master
+        pg.display.set_caption("NonCrect")
         super().__init__(pos, master.get_size())
         self.target = NoneType((0, 0), master.get_size())
         self.limiting = [False, True]

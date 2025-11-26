@@ -91,7 +91,7 @@ class Charactor(Object):
     spawn = None
     spawn_point = None
     control = None
-    goal = None
+    gool = None
 
     def get_spawn_point(self): return self.spawn_point
 
@@ -108,7 +108,9 @@ class Charactor(Object):
         self.spawn = True
         self.spawn_point = pos_unit
         self.control = False
-        self.goal = False
+        self.gool = False
+        self.fly_cool_count = 0
+        self.fly_cool = 12
         return
 
     def __start__(self, camera): ...
@@ -136,7 +138,7 @@ class Charactor(Object):
             if afterimage.__update__(key_pressed, delta_t, objects, camera)
         ]
 
-        if self.goal:
+        if self.gool:
             [afterimage.__up__() for afterimage in self.afterimages]
             ...
 
@@ -179,10 +181,16 @@ class Charactor(Object):
                 self.movement[0] += 240*delta_t
                 ...
 
-            if self.is_land:
-                if key_pressed[pg.K_UP]:
-                    self.movement[1] = -480*delta_t
+            self.fly_cool_count -= 1
+            if key_pressed[pg.K_UP]:
+                if self.is_land:
+                    self.movement[1] = -7.8
                     self.is_land = False
+                    self.fly_cool_count = self.fly_cool
+                    ...
+                elif self.fly_cool_count <= 0 and self.movement[1] > 0:
+                    self.movement[1] = 0
+                    self.fly_cool_count = self.fly_cool
                     ...
                 ...
 
@@ -211,8 +219,8 @@ class Charactor(Object):
                 self.rect[:2] = self.position
                 for land in lands:
                     if self.rect.colliderect(land.rect):
-                        if isinstance(land, Goal):
-                            self.goal = True
+                        if isinstance(land, Gool):
+                            self.gool = True
                             self.death()
                             continue
                         if isinstance(land, CheckPoint):
@@ -322,7 +330,7 @@ class BackGroundRect(Object):
             camera.position[0]/depth-400+randrange(camera.size[0]+400),
             600
         ]
-        side = randrange(50, 200)
+        side = randrange(1, 20)
         size = [side for _ in range(2)]
         super().__init__(pos, size,depth)
         self.base_position = pos
@@ -333,22 +341,16 @@ class BackGroundRect(Object):
         self.__surface__.set_alpha(self.alpha)
         self.rm_alpha = 1
         self.angle = randrange(0, 360)
+        self.delta_t = 0
         return
 
     def __start__(self, camera): ...
 
     def __update__(self, key_pressed, delta_t, objects, camera):
-        self.angle -= 1
-        self.__surface__ = pg.transform.rotozoom(
-            self.__base_surface__, self.angle, 1
-        )
-        self.__surface__.set_colorkey("Black")
+        self.delta_t += delta_t
+        if not self.delta_t > 1 / 20: return True
         rect = self.__surface__.get_rect()
-        self.base_position[1] -= 2
-        self.position = [
-            bp + ss//2 - rc
-            for bp, ss, rc in zip(self.base_position, self.size, rect.center)
-        ]
+        self.position[1] -= 1.5 * self.delta_t
         self.alpha -= self.rm_alpha
         if not self.alpha > 0: return False
         self.__surface__.set_alpha(self.alpha)
@@ -360,20 +362,21 @@ class BackGroundRect(Object):
 class BackGround(Object):
 
     delta_ts = None
-    gen_t = 0.2
+    gen_t = 0.1
     objects = None
 
     def __init__(self):
         super().__init__((0, 0), (0, 0))
         self.delta_ts = 0
         self.objects = []
+        self.limit = 50
         return
 
     def __start__(self, camera): ...
 
     def __update__(self, key_pressed, delta_t, objects, camera):
         self.delta_ts += delta_t
-        if self.delta_ts > self.gen_t:
+        if self.delta_ts > self.gen_t and len(self.objects) < self.limit:
             self.objects.append(BackGroundRect(camera))
             self.delta_ts -= self.gen_t
             ...
@@ -434,7 +437,7 @@ class Texts(Object):
         self.add_text("\Check point/", (1800, 350), 100)
         self.add_text("Enter R", (2900, 250), 100)
         self.add_text("Restart", (2900, 350), 100)
-        self.add_text("Goal->", (6000, -450), 100)
+        self.add_text("Gool->", (6000, -450), 100)
         self.Tutorial = copy(self.texts)
         self.texts = []
 
@@ -527,7 +530,7 @@ class BackRect(Object):
     ...
 
 
-class GoalRect(Object):
+class GoolRect(Object):
 
     base_position = None
     __base_surface__ = None
@@ -566,7 +569,7 @@ class GoalRect(Object):
     ...
 
 
-class Goal(Land):
+class Gool(Land):
 
     objects = None
 
@@ -580,7 +583,7 @@ class Goal(Land):
             )
         ]
         super().__init__(self_land_unit)
-        self.objects = [GoalRect(land_unit, i) for i in range(-1, 2, 2)]
+        self.objects = [GoolRect(land_unit, i) for i in range(-1, 2, 2)]
         return
 
     def __start__(self, camera): ...

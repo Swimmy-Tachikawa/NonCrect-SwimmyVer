@@ -9,7 +9,7 @@ from .objects import (
     BackGround,
     Unseen,
     Texts, CheckPoint, BackRect,
-    Goal, StartCameraWork
+    Gool, StartCameraWork
 )
 from .Camera import Camera
 
@@ -65,7 +65,7 @@ check_point_units = [
     (105, 3, 1, 1),
 ]
 
-goal_units = [
+gool_units = [
     (136, 22, 1, 1),
 ]
 
@@ -95,9 +95,9 @@ check_point = [
     for check_point_unit in check_point_units
 ]
 
-goals = [
-    Goal(unit)
-    for unit in goal_units
+gools = [
+    Gool(unit)
+    for unit in gool_units
 ]
 
 kills = [
@@ -116,9 +116,9 @@ class Engine:
         self.size = (900, 600)
         self.objects = [BackGround(), Texts()] + \
                        unseen + lands + kills + back_rects + \
-                       check_point + goals + [StartCameraWork((-550, 600))]
+                       check_point + gools + [StartCameraWork((-550, 600))]
         self.spawn_point = spawn_point
-        self.goal = False
+        self.gool = False
         self.c = 0
         self.start = True
         self.charactor = None
@@ -144,10 +144,10 @@ class Engine:
         chars = [obj for obj in self.objects if isinstance(obj, Charactor)]
         if not len(chars) == 0:
             self.spawn_point = chars[0].spawn_point
-            self.goal = chars[0].goal
+            self.gool = chars[0].gool
             ...
         else:
-            if self.goal: self.c += 1
+            if self.gool: self.c += 1
             if self.c > 180:
                 return -1
             ...
@@ -155,7 +155,7 @@ class Engine:
         if self.start and StartCameraWork not in map(type, self.objects):
             self.start = False
             ...
-        if not Charactor in map(type, self.objects) and not self.goal:
+        if not Charactor in map(type, self.objects) and not self.gool:
             self.charactor = Charactor(self.spawn_point)
             self.objects.append(self.charactor)
             ...
